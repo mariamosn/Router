@@ -57,8 +57,3 @@ rent este adăugat în coada de așteptare și se emite un ARP request.
 	10. Dacă am găsit și o rută și o adresă MAC potrivită, completez câmpurile
 adreselor MAC sursă și destinație din header-ul ETH și trimit pachetul prin in-
 terfața găsită la pasul 8.
-
-Probleme întâmpinate
-	Am avut mici confuzii legate de găsirea exactă a câmpurilor care suferă mo-
-dificări din cauza diferențelor cauzate de endianness și, de asemenea, mi-a luat
-ceva să înțeleg exact cum se poate face debug.
