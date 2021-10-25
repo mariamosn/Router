@@ -1,0 +1,64 @@
+Maria Moșneag
+323CA
+Aprilie 2021
+Tema 1 PC
+
+Structuri de date auxiliare
+	Principalele structuri folosite pentru implementarea procesului de rutare
+sunt:
+	+ tabela de rutare: - construită pe baza fișierelor rtable_.txt
+						- stocată în memorie sub forma unui array alocat dinamic
+						- după introducerea datelor în tabelă, aceasta este
+						sortată crescător în funcție de prefixul intrărilor,
+						sortarea folosită fiind quickSort ce are o complexitate
+						temporală de O(n log n)
+	+ tabela de ARP: - stocată tot sub forma unui array alocat dinamic
+					 - este populată pe parcursul procesului de rutare, fiind
+					 adăugată câte o intrare de fiecare dată când se întâlnește
+					 o adresă IP pentru care nu se cunoaște adresa MAC și este
+					 nevoie să se trimită un ARP request
+	+ coada pachetelor aflate în așteptarea unui ARP reply
+
+Flow-ul programului
+	Pentru fiecare pachet primit, sunt urmați cei 10 pași descriși și în enunțul
+temei.
+	1. Se primește pachetul și se verifică tipul acestuia.
+	2. Pentru pachetele IP se verifică dacă sunt destinate router-ului nostru
+și dacă da, în cazul în care sunt de tip ICMP_ECHO, se trimite un răspuns. În
+cazul în care pachetul nu era pentru noi, acestea va fi redirecționat ulterior.
+	3. Dacă pachetul este de tip ARP request, se creează și se trimite un pachet
+de tip ARP reply ce conține adresa MAC dorită.
+	4. Dacă este de tip ARP reply, se completează tabela de ARP și apoi se
+se trimit pachetele din coadă care așteptau acest ARP reply. Pentru verificarea
+pachetelor din coada de așteptare se face deque rând pe rând, iar pachetele care
+încă nu pot fi trimise sunt adăugate temporar într-o coadă auxiliară.
+	După pașii 3 și 4, pachetele ARP sunt aruncate, acestea nefiind redirecțio-
+nate mai departe.
+	5. Se verifică ttl-ul pachetului primit și, dacă este cazul, se trimite un
+pachet ICMP care să indice faptul că a fost depășită limita de hop-uri și se
+aruncă pachetul curent.
+	6. Se verifică checksum-ul pachetului și, dacă acesta este greșit, se aruncă
+pachetul.
+	7. Se updatează ttl-ul și se recalculează checksum-ul. Pentru a optimiza
+acest pas am folosit algoritmul descris în RFC 1624, bazându-mă pe faptul că nu
+modific decât un bloc de 16 biți (de fapt câmpul ttl are numai 8 biți, dar pen-
+tru a putea folosi acest algoritm, a fost necesar să iau în considerare blocul
+format din ttl și tipul protocolului).
+	8. Caut în tabela de rutare intrarea potrivită pentru rutarea pachetului cu-
+rent. Pentru aceasta folosesc căutarea binară, știind că tabela este deja ordo-
+nată. Complexitatea temporală este așadar O(log n). În cazul în care nu este
+găsită nicio intrare potrivită, trimit un pachet ICMP de tipul ICMP_DEST_UNREACH
+și arunc pachetul curent.
+	9. Caut în tabela de ARP adresa MAC corespunzătoare adresei IP a next
+hop-ului găsit la pasul anterior. Căutarea în tabelă se face printr-o parcurgere
+liniară, complexitatea fiind deci O(n), unde n reprezintă numărul curent de in-
+trări din tabelă. În cazul în care nu este găsită nicio potrivire, pachetul cu-
+rent este adăugat în coada de așteptare și se emite un ARP request.
+	10. Dacă am găsit și o rută și o adresă MAC potrivită, completez câmpurile
+adreselor MAC sursă și destinație din header-ul ETH și trimit pachetul prin in-
+terfața găsită la pasul 8.
+
+Probleme întâmpinate
+	Am avut mici confuzii legate de găsirea exactă a câmpurilor care suferă mo-
+dificări din cauza diferențelor cauzate de endianness și, de asemenea, mi-a luat
+ceva să înțeleg exact cum se poate face debug.
